@@ -11,19 +11,27 @@ static public class NetworkedServerProcessing
     {
         Debug.Log("msg received = " + msg + ".  connection id = " + clientConnectionID);
 
-        string[] csv = msg.Split(',');
-        int signifier = int.Parse(csv[0]);
-
-       /* if (signifier == ClientToServerSignifiers.asd)
+        string[] csv = msg.Split('|');
+        int check = 0;
+        int signifier = 0;
+        if (int.TryParse(csv[0],out check))
         {
+            signifier = int.Parse(csv[0]);
+        }
 
-        }*/
-        // else if (signifier == ClientToServerSignifiers.asd)
-        // {
+      switch (signifier)
+        {
+            case ClientToServerSignifiers.DestroyBaloonInPos:
+                gameLogic.DestroyBaloon(float.Parse(csv[1]), float.Parse(csv[2]));
+                break;
+            case ClientToServerSignifiers.Disconnect:
+                if (gameLogic.ids.Contains(clientConnectionID))
+                {
+                    gameLogic.ids.Remove(clientConnectionID);
+                }
+                break;
 
-        // }
-
-        //gameLogic.DoSomething();
+        }
     }
     static public void SendMessageToClient(string msg, int clientConnectionID)
     {
@@ -38,11 +46,16 @@ static public class NetworkedServerProcessing
     {
         Debug.Log("New Connection, ID == " + clientConnectionID);
         gameLogic.ids.AddLast(clientConnectionID);
+        gameLogic.SendAllBaloonsToNewClient(clientConnectionID);
     }
     static public void DisconnectionEvent(int clientConnectionID)
     {
         Debug.Log("New Disconnection, ID == " + clientConnectionID);
-        gameLogic.ids.Remove(clientConnectionID);
+        if(gameLogic.ids.Contains(clientConnectionID))
+        {
+            gameLogic.ids.Remove(clientConnectionID);
+        }
+        
     }
 
     #endregion
@@ -70,14 +83,16 @@ static public class NetworkedServerProcessing
 #region Protocol Signifiers
 static public class ClientToServerSignifiers
 {
-    
-  public static int ClickedOnPos = 1;
+
+    public const int DestroyBaloonInPos = 1;
+    public const int Disconnect = 2;
 
 }
 
 static public class ServerToClientSignifiers
 {
-  public static int PutNewBaloonToPos = 1;
+    public const int PutNewBaloonToPos = 1;
+    public const int DestroyBaloonByPos = 2;
 }
 
 #endregion
